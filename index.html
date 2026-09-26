@@ -221,7 +221,7 @@ hr.sep{border:0;border-top:1px solid var(--raya);margin:22px 0}
       <p class="ayuda" style="margin:0 0 8px">Instálalas en tu ordenador para escribir con ellas en Word o en cualquier programa.</p>
       <div class="fuentes" id="fuentes"></div>
     </fieldset>
-    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.1 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
+    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.2 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
   </form>
 
   <section class="vista" aria-label="Vista previa">
@@ -246,7 +246,7 @@ const TIPOS = {
             ayuda:"Letra de imprenta con el ligero temblor de un trazo hecho a mano."},
   limpia:  {nombre:"Imprenta de trazo limpio", archivo:"ImprentaEscolarLimpia", cap:.700, xh:.4667, dsc:.2333,
             ayuda:"La misma letra de imprenta, con trazos perfectos."},
-  cursiva: {nombre:"Cursiva enlazada", archivo:"CursivaEscolar", cap:.700, xh:.350, dsc:.350, tam:8,
+  cursiva: {nombre:"Cursiva enlazada", archivo:"CursivaEscolar", cap:.700, xh:.350, dsc:.350, tam:8, letra:"inclinada",
             ayuda:"Letra ligada escolar. La pauta cambia a tres franjas iguales y se ve mejor a partir de 7,5 mm."},
 };
 const PITCH = 1.458;
@@ -289,13 +289,16 @@ function leer(){
     corchetes:$("corchetes").checked, rellenar:$("rellenar").checked, aireado:$("aireado").checked,
     titulo:$("titulo").value, inicio:$("inicio").value, nombreFecha:$("nombreFecha").checked,
     pie:$("pie").value, paginaPie:$("paginaPie").checked, zoom:+$("zoom").value,
-    tamPorTipo,
+    tamPorTipo, letraPorTipo,
   };
 }
-/* Cada tipo de letra recuerda su propio tamaño (la cursiva necesita más). */
-let tamPorTipo = {};
+/* Cada tipo de letra recuerda su propio tamaño (la cursiva necesita más)
+   y su inclinación (la cursiva empieza inclinada). */
+let tamPorTipo = {}, letraPorTipo = {};
 function aplicar(c){
   if (c.tamPorTipo) tamPorTipo = c.tamPorTipo;
+  if (c.letraPorTipo) letraPorTipo = c.letraPorTipo;
+  else if (c.tipo === "cursiva") c = Object.assign({}, c, {letra:"inclinada"});   // configuración de la v1.1
   for (const k of ctrls){ if (!(k in c)) continue; const el=$(k); if (el.type==="checkbox") el.checked=c[k]; else el.value=c[k]; }
   for (const n of ["tipo","letra","color","pauta"]) if (c[n]){ const r=document.querySelector(`input[name=${n}][value="${c[n]}"]`); if(r) r.checked=true; }
 }
@@ -489,9 +492,14 @@ $("panel").addEventListener("change", programar);
 $("zoom").addEventListener("input", ()=>{ document.documentElement.style.setProperty("--ancho", $("zoom").value+"px"); guardar(leer()); });
 let tipoActual = null;
 document.querySelectorAll("input[name=tipo]").forEach(r => r.addEventListener("change", ()=>{
-  if (tipoActual) tamPorTipo[tipoActual] = +$("tam").value;
+  if (tipoActual){
+    tamPorTipo[tipoActual] = +$("tam").value;
+    letraPorTipo[tipoActual] = document.querySelector("input[name=letra]:checked").value;
+  }
   tipoActual = r.value;
   $("tam").value = tamPorTipo[r.value] ?? TIPOS[r.value].tam ?? 6;
+  const letra = letraPorTipo[r.value] ?? TIPOS[r.value].letra;
+  if (letra) document.querySelector(`input[name=letra][value="${letra}"]`).checked = true;
 }));
 $("btnEjemplos").addEventListener("click", ()=>{ $("texto").value = EJEMPLOS.join("\n\n"); $("paginaNueva").checked = true; render(); });
 $("btnVaciar").addEventListener("click", ()=>{ $("texto").value = ""; $("texto").focus(); render(); });

@@ -41,4 +41,4 @@ Están en la carpeta `fonts/`, y todas juntas en `fonts/fuentes-caligrafia.zip`.
 
 (Todos los archivos terminan en `-Regular.ttf`.)
 
-Incluyen ñ, vocales con tilde, ü y los signos ¿ ¡ « ». Los trazos se basan en las fuentes Hershey (Roman Simplex para la imprenta y Script Simplex para la cursiva), de A. V. Hershey (U.S. National Bureau of Standards), cuyo uso se permite con atribución.
+Incluyen ñ, vocales con tilde, ü y los signos ¿ ¡ « ». Los trazos se basan en las fuentes Hershey: Roman Simplex para la imprenta y para las mayúsculas y los números de la cursiva, y Script Simplex para las minúsculas cursivas, de A. V. Hershey (U.S. National Bureau of Standards), cuyo uso se permite con atribución.

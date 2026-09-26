@@ -3,6 +3,13 @@
 Aquí se apuntan los cambios de cada versión del Cuaderno de caligrafía.
 La versión más reciente va arriba.
 
+## [1.2] - 2026-09-26
+
+### Cambiado
+
+- **Mayúsculas y números de la cursiva más sencillos.** Los anteriores eran demasiado enrevesados para el alumnado. Ahora tienen la forma de la letra de imprenta, con la misma inclinación y el mismo grosor que las minúsculas cursivas. Las minúsculas siguen enlazadas igual que antes.
+- **La cursiva empieza inclinada.** Cada tipo de letra recuerda su propia inclinación. Al elegir la cursiva por primera vez sale inclinada, aunque la imprenta se esté usando recta.
+
 ## [1.1] - 2026-09-26
 
 ### Añadido
