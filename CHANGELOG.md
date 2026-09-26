@@ -3,6 +3,13 @@
 Aquí se apuntan los cambios de cada versión del Cuaderno de caligrafía.
 La versión más reciente va arriba.
 
+## [1.3.2] - 2026-09-26
+
+### Corregido
+
+- **La cursiva recta se echaba a la izquierda.** Para enderezarla se había supuesto que la letra de partida estaba inclinada unos 18º, pero sus trazos verticales (las astas de l, t, d, i, n...) solo lo están unos 11º. Al quitarle de más, la «recta» quedaba ligeramente inclinada hacia la izquierda. Ahora se corrige con la inclinación medida y las astas quedan verticales.
+- **Mayúsculas y números de la cursiva con la misma inclinación que las minúsculas.** Por el mismo error, en la cursiva recta iban algo inclinados y en la inclinada, más tumbados que el resto. Ahora van igual que las minúsculas. La cursiva inclinada mantiene su inclinación suave de siempre, de unos 6º.
+
 ## [1.3.1] - 2026-09-26
 
 ### Corregido
