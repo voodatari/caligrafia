@@ -3,6 +3,17 @@
 Aquí se apuntan los cambios de cada versión del Cuaderno de caligrafía.
 La versión más reciente va arriba.
 
+## [1.4] - 2026-09-26
+
+### Quitado
+
+- **Cursiva recta.** La cursiva enlazada solo se ofrece inclinada. Al elegirla, desaparece el selector de inclinación, y si en el navegador había guardada la cursiva recta, se usa la inclinada.
+- Las fuentes `CursivaEscolarRecta-Regular.ttf` y `CursivaEscolarRectaPunteada-Regular.ttf` ya no se publican. Ahora hay 10 fuentes para descargar, en vez de 12.
+
+### Cambiado
+
+- Al volver de la cursiva a una de las imprentas, se recupera la última inclinación que se usó con la imprenta (inclinada o recta).
+
 ## [1.3.2] - 2026-09-26
 
 ### Corregido

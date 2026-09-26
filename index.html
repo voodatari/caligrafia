@@ -80,6 +80,7 @@ input[type=range]{width:100%;accent-color:var(--tinta)}
 .opcion input:focus-visible + span{outline:3px solid var(--lapiz);outline-offset:2px}
 .muestra{font-size:26px;line-height:1.15;color:var(--grafito);font-weight:400;min-height:1.15em}
 .opciones-3{grid-template-columns:repeat(3,1fr)}
+[hidden]{display:none!important}
 .opcion span.en-linea{flex-direction:row;align-items:center;gap:10px;min-height:0}
 .opcion span.en-linea .muestra{font-size:24px;width:14px;text-align:center}
 .fuentes .familia{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--raya)}
@@ -197,8 +198,8 @@ dialog.ia::backdrop{background:rgba(31,79,163,.28)}
         <label class="opcion"><input type="radio" name="tipo" value="limpia"><span><b class="muestra" data-muestra="limpia">Aa ñ</b>Imprenta de trazo limpio</span></label>
         <label class="opcion"><input type="radio" name="tipo" value="cursiva"><span><b class="muestra" data-muestra="cursiva">Aa ñ</b>Cursiva enlazada</span></label>
       </div>
-      <label class="campo">Inclinación</label>
-      <div class="opciones" role="radiogroup" aria-label="Inclinación de la letra">
+      <label class="campo" id="lblInclinacion">Inclinación</label>
+      <div class="opciones" role="radiogroup" aria-label="Inclinación de la letra" id="grpInclinacion">
         <label class="opcion"><input type="radio" name="letra" value="inclinada" checked><span class="en-linea"><b class="muestra" data-muestra="inclinada">l</b>Inclinada</span></label>
         <label class="opcion"><input type="radio" name="letra" value="recta"><span class="en-linea"><b class="muestra" data-muestra="recta">l</b>Recta</span></label>
       </div>
@@ -253,7 +254,7 @@ dialog.ia::backdrop{background:rgba(31,79,163,.28)}
       <p class="ayuda" style="margin:0 0 8px">Instálalas en tu ordenador para escribir con ellas en Word o en cualquier programa.</p>
       <div class="fuentes" id="fuentes"></div>
     </fieldset>
-    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.3.2 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
+    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.4 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
   </form>
 
   <section class="vista" aria-label="Vista previa">
@@ -349,7 +350,7 @@ const TIPOS = {
             ayuda:"Letra de imprenta con el ligero temblor de un trazo hecho a mano."},
   limpia:  {nombre:"Imprenta de trazo limpio", archivo:"ImprentaEscolarLimpia", cap:.700, xh:.4667, dsc:.2333,
             ayuda:"La misma letra de imprenta, con trazos perfectos."},
-  cursiva: {nombre:"Cursiva enlazada", archivo:"CursivaEscolar", cap:.700, xh:.350, dsc:.350, tam:8, letra:"inclinada",
+  cursiva: {nombre:"Cursiva enlazada", archivo:"CursivaEscolar", cap:.700, xh:.350, dsc:.350, tam:8, letra:"inclinada", soloInclinada:true,
             ayuda:"Letra ligada escolar. La pauta cambia a tres franjas iguales y se ve mejor a partir de 7,5 mm."},
 };
 const PITCH = 1.458;
@@ -387,7 +388,8 @@ function leer(){
   const q = n => document.querySelector(`input[name=${n}]:checked`)?.value;
   return {
     texto:$("texto").value, paginaNueva:$("paginaNueva").checked, mayusculas:$("mayusculas").checked,
-    tipo:q("tipo") || "mano", letra:q("letra"), tam:+$("tam").value, color:q("color"), primeraLetra:$("primeraLetra").checked,
+    tipo:q("tipo") || "mano",
+    letra:(TIPOS[q("tipo")]||{}).soloInclinada ? "inclinada" : q("letra"), tam:+$("tam").value, color:q("color"), primeraLetra:$("primeraLetra").checked,
     patron:$("patron").value, pauta:q("pauta"), intensidad:+$("intensidad").value,
     corchetes:$("corchetes").checked, rellenar:$("rellenar").checked, aireado:$("aireado").checked,
     titulo:$("titulo").value, inicio:$("inicio").value, nombreFecha:$("nombreFecha").checked,
@@ -552,6 +554,9 @@ async function render(){
   await cargarJuego(c.tipo, c.letra);
   if (mio !== turno) return;               // ya hay otro cambio más reciente
   $("ayudaTipo").textContent = (TIPOS[c.tipo] || TIPOS.mano).ayuda;
+  // la cursiva solo existe inclinada: se oculta la elección
+  const solo = !!(TIPOS[c.tipo] || {}).soloInclinada;
+  $("lblInclinacion").hidden = solo; $("grpInclinacion").hidden = solo;
   pintarMuestras(c);
   guardar(c);
   $("tamTxt").textContent = c.tam.toLocaleString("es",{maximumFractionDigits:2}) + " mm";
@@ -566,7 +571,12 @@ async function render(){
 function pintarMuestras(c){
   document.querySelectorAll("[data-muestra]").forEach(el=>{
     const k = el.dataset.muestra;
-    const tipo = TIPOS[k] ? k : c.tipo, letra = TIPOS[k] ? c.letra : k;
+    const tipo = TIPOS[k] ? k : c.tipo;
+    let letra = TIPOS[k] ? c.letra : k;
+    if (TIPOS[tipo].soloInclinada){
+      if (!TIPOS[k]) return;                 // selector de inclinación oculto
+      letra = "inclinada";
+    }
     el.style.fontFamily = `"${variante(tipo, letra, "s").fam}", var(--ui)`;
     cargarFuente(tipo, letra, "s");
   });
@@ -589,11 +599,15 @@ $("pautas").innerHTML = PAUTAS.map((p,i)=>`<label class="opcion"><input type="ra
 /* ---------- descargas de fuentes ---------- */
 function enlacesFuentes(){
   const vars = [["", "Inclinada"], ["Punteada", "Inclinada punteada"], ["Recta", "Recta"], ["RectaPunteada", "Recta punteada"]];
-  $("fuentes").innerHTML = Object.values(TIPOS).map(T =>
-    `<div class="familia"><b>${T.nombre}</b><div class="enlaces">` +
-    vars.map(([suf, et]) => `<a href="fonts/${T.archivo}${suf}-Regular.ttf" download>${et}</a>`).join("") +
-    `</div></div>`).join("") +
-    `<a class="todas" href="fonts/fuentes-caligrafia.zip" download>Descargar las 12 fuentes (ZIP)</a>`;
+  let total = 0;
+  $("fuentes").innerHTML = Object.values(TIPOS).map(T => {
+    const vs = T.soloInclinada ? vars.slice(0, 2) : vars;
+    total += vs.length;
+    return `<div class="familia"><b>${T.nombre}</b><div class="enlaces">` +
+      vs.map(([suf, et]) => `<a href="fonts/${T.archivo}${suf}-Regular.ttf" download>${et}</a>`).join("") +
+      `</div></div>`;
+  }).join("") +
+    `<a class="todas" href="fonts/fuentes-caligrafia.zip" download>Descargar las ${total} fuentes (ZIP)</a>`;
 }
 enlacesFuentes();
 
@@ -844,11 +858,15 @@ let tipoActual = null;
 document.querySelectorAll("input[name=tipo]").forEach(r => r.addEventListener("change", ()=>{
   if (tipoActual){
     tamPorTipo[tipoActual] = +$("tam").value;
-    letraPorTipo[tipoActual] = document.querySelector("input[name=letra]:checked").value;
+    // la cursiva no tiene inclinación que recordar (solo va inclinada)
+    if (!TIPOS[tipoActual].soloInclinada)
+      letraPorTipo[tipoActual] = letraPorTipo.imprenta = document.querySelector("input[name=letra]:checked").value;
   }
   tipoActual = r.value;
   $("tam").value = tamPorTipo[r.value] ?? TIPOS[r.value].tam ?? 6;
-  const letra = letraPorTipo[r.value] ?? TIPOS[r.value].letra;
+  // una imprenta sin inclinación propia toma la última que se usó en imprenta
+  const letra = TIPOS[r.value].soloInclinada ? "inclinada"
+              : (letraPorTipo[r.value] ?? letraPorTipo.imprenta ?? TIPOS[r.value].letra);
   if (letra) document.querySelector(`input[name=letra][value="${letra}"]`).checked = true;
 }));
 /* Corrige a la vista las líneas en blanco bajo los títulos, sin mover el cursor. */
