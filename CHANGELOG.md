@@ -3,6 +3,18 @@
 Aquí se apuntan los cambios de cada versión del Cuaderno de caligrafía.
 La versión más reciente va arriba.
 
+## [1.3] - 2026-09-26
+
+### Añadido
+
+- **Crear textos con IA.** Un nuevo botón abre una ventana en tres pasos:
+  1. Eliges cuántas fichas quieres (una por tema), la edad del alumnado, el tipo de texto y los temas. Los temas se escriben separados por comas o se añaden y quitan pulsando etiquetas: videojuegos, deportes, cine y series, cuentos, aventuras y más.
+  2. La web escribe el encargo y lo envía a Claude o a ChatGPT, que lo reciben directamente. Gemini y DeepSeek no lo permiten: se abren y el encargo queda copiado para pegarlo. También se puede copiar para cualquier otra IA, o verlo y retocarlo antes de enviarlo.
+  3. Pegas la respuesta y los textos pasan a la ficha, sustituyendo o añadiéndose a los que ya había.
+- **Extensión calculada con la configuración de la ficha.** El encargo pide a la IA el número de palabras y caracteres que caben en una ficha, según el tamaño de letra, el tipo de letra, el reparto de renglones, las líneas de Nombre y Fecha y el espacio entre renglones. Por ejemplo, con la imprenta a 6 mm caben unas 60-73 palabras, y a 8 mm unas 31-38.
+- **Limpieza de la respuesta.** Se quitan la introducción y la despedida de la IA, las negritas y la numeración de los títulos. Las comillas inglesas pasan a « », los puntos suspensivos a tres puntos y las rayas a guiones, y se eliminan los emojis y los símbolos que la letra no tiene.
+- **Revisión del resultado.** Al pegar la respuesta se avisa de qué textos no caben en una ficha y cuáles dejan renglones libres.
+
 ## [1.2] - 2026-09-26
 
 ### Cambiado

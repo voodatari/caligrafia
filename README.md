@@ -10,6 +10,7 @@ Los cambios de cada versión están en el [registro de cambios](CHANGELOG.md).
 
 - Pegar varios textos separados por una línea en blanco. Cada uno puede empezar en una ficha nueva.
 - Poner el tema de cada ficha con una línea que empiece por `#` (por ejemplo `# El lince ibérico`).
+- Crear los textos con IA: la web escribe el encargo con el número de fichas, los temas y la extensión que cabe en cada ficha según la configuración elegida, y lo envía a Claude o a ChatGPT (con Gemini, DeepSeek u otras IA se copia para pegarlo). Después se pega la respuesta y se limpia sola.
 - Elegir el tipo de letra:
   - imprenta a mano, con el ligero temblor de un trazo real;
   - imprenta de trazo limpio, la misma letra con trazos perfectos;

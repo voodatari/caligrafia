@@ -119,6 +119,36 @@ input[type=range]{width:100%;accent-color:var(--tinta)}
 hr.sep{border:0;border-top:1px solid var(--raya);margin:22px 0}
 .pie-app{font-size:.82rem;color:var(--grafito-2);margin-top:22px}
 
+/* ---------- ventana de textos con IA ---------- */
+dialog.ia{width:min(760px,calc(100vw - 24px));max-height:calc(100vh - 24px);border:0;border-radius:12px;padding:0;
+  box-shadow:0 20px 60px -20px rgba(22,59,124,.55);color:var(--grafito);background:var(--papel)}
+dialog.ia::backdrop{background:rgba(31,79,163,.28)}
+.ia-cab{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--raya);position:sticky;top:0;background:var(--papel);z-index:1}
+.ia-cab h2{margin:0;font-size:1.25rem;color:var(--tinta-2);margin-right:auto}
+.ia-cuerpo{padding:6px 20px 22px;overflow:auto}
+.paso{display:grid;grid-template-columns:34px 1fr;gap:4px 12px;padding:16px 0;border-bottom:1px solid var(--raya)}
+.paso:last-child{border-bottom:0}
+.paso > .num{width:30px;height:30px;border-radius:50%;background:var(--tinta);color:#fff;display:grid;place-items:center;font-weight:700}
+.paso h3{margin:3px 0 8px;font-size:1.05rem}
+.paso .campo:first-of-type{margin-top:0}
+.rejilla{display:grid;grid-template-columns:110px minmax(210px,1.3fr) minmax(170px,1fr);gap:10px 14px;margin-bottom:6px}
+@media (max-width:640px){.rejilla{grid-template-columns:1fr 1fr}.rejilla > :first-child{grid-column:1/-1}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1.5px solid var(--raya);background:#fff;border-radius:999px;padding:4px 11px;font-size:.88rem;cursor:pointer}
+.chip[aria-pressed=true]{border-color:var(--tinta);background:#EAF0FB;color:var(--tinta-2)}
+.cabe{background:#F2F6FD;border:1px solid #CFDCF3;border-radius:8px;padding:10px 12px;margin-top:12px;font-size:.93rem}
+.cabe b{color:var(--tinta-2)}
+.botones-ia{display:flex;flex-wrap:wrap;gap:8px}
+.botones-ia .btn{flex:1 1 150px;flex-direction:column;gap:1px;padding:9px 12px}
+.botones-ia .btn small{font-weight:400;font-size:.78rem;opacity:.85}
+.ia textarea{min-height:150px}
+.ia details{margin-top:10px;font-size:.92rem}
+.ia details textarea{min-height:170px;font-size:.85rem;background:#FAFBFD;line-height:1.4}
+.estado{margin:10px 0 0;font-size:.92rem;min-height:1.2em}
+.estado.ok{color:#2E6B45}.estado.mal{color:#A23A2F}
+.informe{margin:8px 0 0;padding-left:18px;font-size:.9rem;color:var(--grafito-2)}
+@media (max-width:560px){.paso{grid-template-columns:1fr}.paso > .num{display:none}}
+
 @media print{
   @page{size:A4;margin:0}
   html,body{background:#fff;height:auto}
@@ -150,6 +180,7 @@ hr.sep{border:0;border-top:1px solid var(--raya);margin:22px 0}
       <textarea id="texto" spellcheck="true" aria-describedby="ayudaTexto"></textarea>
       <p class="ayuda" id="ayudaTexto">Separa los textos con una línea en blanco. Si una línea empieza por <b>#</b>, será el tema de esa ficha (por ejemplo: <i># El lince ibérico</i>).</p>
       <div class="fila" style="margin-top:10px">
+        <button type="button" class="btn btn-principal btn-mini" id="btnIA">Crear textos con IA</button>
         <button type="button" class="btn btn-sec btn-mini" id="btnEjemplos">Cargar 20 textos de ejemplo</button>
         <button type="button" class="btn btn-sec btn-mini" id="btnVaciar">Vaciar</button>
       </div>
@@ -221,7 +252,7 @@ hr.sep{border:0;border-top:1px solid var(--raya);margin:22px 0}
       <p class="ayuda" style="margin:0 0 8px">Instálalas en tu ordenador para escribir con ellas en Word o en cualquier programa.</p>
       <div class="fuentes" id="fuentes"></div>
     </fieldset>
-    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.2 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
+    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.3 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
   </form>
 
   <section class="vista" aria-label="Vista previa">
@@ -234,6 +265,77 @@ hr.sep{border:0;border-top:1px solid var(--raya);margin:22px 0}
     <div class="hojas" id="hojas"></div>
   </section>
 </main>
+
+<dialog class="ia" id="dlgIA" aria-labelledby="iaTitulo">
+  <div class="ia-cab">
+    <h2 id="iaTitulo">Crear textos con IA</h2>
+    <button type="button" class="btn btn-sec btn-mini" id="iaCerrar">Cerrar</button>
+  </div>
+  <div class="ia-cuerpo">
+    <section class="paso">
+      <span class="num" aria-hidden="true">1</span>
+      <div>
+        <h3>Qué textos quieres</h3>
+        <div class="rejilla">
+          <div><label class="campo" for="iaN">Fichas</label>
+            <input type="number" id="iaN" min="1" max="40" value="10"></div>
+          <div><label class="campo" for="iaEdad">Edad del alumnado</label>
+            <select id="iaEdad"></select></div>
+          <div><label class="campo" for="iaTipoTexto">Tipo de texto</label>
+            <select id="iaTipoTexto">
+              <option value="variado">Variado</option>
+              <option value="narrativo">Cuentos y relatos</option>
+              <option value="informativo">Textos informativos</option>
+              <option value="descriptivo">Descripciones</option>
+              <option value="dialogo">Diálogos</option>
+            </select></div>
+        </div>
+        <label class="campo" for="iaTemas">Temas</label>
+        <textarea id="iaTemas" rows="2" style="min-height:0;background:#fff;line-height:1.45"></textarea>
+        <p class="ayuda">Sepáralos con comas y cámbialos a tu gusto. Cada ficha tendrá un tema distinto. Pulsa una etiqueta para añadirla o quitarla.</p>
+        <div class="chips" id="iaChips"></div>
+        <label class="campo" for="iaExtra">Otras indicaciones (opcional)</label>
+        <input type="text" id="iaExtra" placeholder="Por ejemplo: que salgan muchas palabras con b y v">
+        <div class="cabe" id="iaCabe" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="paso">
+      <span class="num" aria-hidden="true">2</span>
+      <div>
+        <h3>Envía el encargo a una IA</h3>
+        <div class="botones-ia">
+          <button type="button" class="btn btn-principal" data-ia="claude">Claude<small>lo recibe directamente</small></button>
+          <button type="button" class="btn btn-principal" data-ia="chatgpt">ChatGPT<small>lo recibe directamente</small></button>
+          <button type="button" class="btn btn-sec" data-ia="gemini">Gemini<small>hay que pegarlo</small></button>
+          <button type="button" class="btn btn-sec" data-ia="deepseek">DeepSeek<small>hay que pegarlo</small></button>
+          <button type="button" class="btn btn-sec" data-ia="copiar">Copiar el encargo<small>para otra IA</small></button>
+        </div>
+        <p class="ayuda">Claude y ChatGPT abren el encargo ya escrito. Gemini y DeepSeek no lo permiten: se abren vacíos y el encargo queda copiado, así que solo tienes que pegarlo con Ctrl+V y enviarlo. Hay que tener sesión iniciada en la IA que elijas.</p>
+        <p class="estado" id="iaEstadoEnvio" aria-live="polite"></p>
+        <details>
+          <summary>Ver o retocar el encargo</summary>
+          <textarea id="iaPrompt" spellcheck="false"></textarea>
+          <p class="ayuda">Si lo retocas aquí, los botones envían tu versión. Se rehace al cambiar algo del paso 1.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="paso">
+      <span class="num" aria-hidden="true">3</span>
+      <div>
+        <h3>Pega aquí la respuesta</h3>
+        <textarea id="iaRespuesta" placeholder="# Título del primer texto&#10;Texto del primer tema…&#10;&#10;# Título del segundo texto&#10;Texto del segundo tema…"></textarea>
+        <div class="fila" style="margin-top:10px">
+          <button type="button" class="btn btn-principal" id="iaSustituir">Sustituir mis textos</button>
+          <button type="button" class="btn btn-sec" id="iaAnadir">Añadir a mis textos</button>
+        </div>
+        <p class="estado" id="iaEstado" aria-live="polite"></p>
+        <ul class="informe" id="iaInforme"></ul>
+      </div>
+    </section>
+  </div>
+</dialog>
 
 <script>
 const EJEMPLOS = ["# Mundos de bloques\nEn los videojuegos de construir, como Minecraft, el mundo está hecho de bloques. Puedes levantar una casa, excavar una mina o diseñar un castillo enorme con tus amigos. Lo mejor es que no hay una única forma de jugar: unos prefieren explorar cuevas y otros inventar máquinas. Construir paso a paso también enseña a planificar y a tener paciencia. ¿Qué construirías tú si tuvieras bloques infinitos?", "# Un partido en el recreo\nSuena el timbre y todos corremos a la pista. Hacemos dos equipos, ponemos dos mochilas como porterías y empieza el partido. Da igual quién gane, porque lo importante es pasar el balón, respetar las normas y animar a los compañeros. Cuando alguien se cae, paramos el juego y le ayudamos a levantarse. Así se juega de verdad en equipo. Al volver a clase, todos llegamos cansados, pero contentos.", "# El Día de Andalucía\nCada 28 de febrero celebramos el Día de Andalucía. En muchos colegios se canta el himno, se desayuna pan con aceite de oliva y se decoran las clases con la bandera verde y blanca. Andalucía tiene ocho provincias: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga y Sevilla. ¿Cuántas de ellas has visitado? En Andalucía hay mar, montaña, desierto y campiña: un territorio lleno de contrastes.", "# Mi perro Tango\nTango es un perro pequeño con unas orejas enormes. Cada tarde lo saco a pasear y siempre llevo una bolsa para recoger lo que deja en la calle. Tener una mascota es divertido, pero también es una responsabilidad: hay que darle comida y agua limpia, llevarlo al veterinario y jugar con él. A cambio, Tango me recibe moviendo la cola. Por las noches, se acurruca a los pies de mi cama y ronca muy bajito.", "# Viaje por el sistema solar\nNuestro sistema solar tiene ocho planetas que giran alrededor del Sol. Mercurio es el más cercano y Neptuno, el más lejano. Júpiter es tan grande que dentro de él cabrían más de mil planetas como la Tierra. Saturno es famoso por sus anillos, formados por trozos de hielo y roca. ¿Te imaginas verlos desde una nave espacial? Marte, el planeta rojo, es el siguiente destino que sueñan explorar los científicos.", "# Gigantes del pasado\nHace millones de años, los dinosaurios dominaban la Tierra. Algunos eran gigantes que comían plantas, como el diplodocus, y otros eran cazadores feroces, como el tiranosaurio. Sabemos cómo eran gracias a los fósiles, restos convertidos en piedra. Los científicos creen que las aves actuales son sus parientes. ¡Una gallina es prima de un dinosaurio! Hoy puedes ver sus esqueletos en muchos museos de ciencias naturales.", "# Pádel en familia\nEl pádel es uno de los deportes más practicados en España. Se juega por parejas en una pista rodeada de paredes de cristal, y la pelota puede rebotar en ellas. Por eso los puntos son largos y emocionantes. Solo necesitas una pala, unas pelotas y ganas de moverte. Además, es un deporte perfecto para jugar en familia los fines de semana. Lo importante es divertirse y saludar al rival al acabar el partido.", "# Un día de playa\nEn verano, la playa se llena de toallas, sombrillas y castillos de arena. Bajo el agua del Mediterráneo vive la posidonia, una planta marina que da refugio a muchos peces y ayuda a que el agua esté limpia. Por eso es tan importante no dejar basura en la arena. Una playa limpia es un regalo para todos, también para los animales del mar. Y recuerda: ponte crema solar, bebe agua y báñate siempre donde haya socorrista.", "# Palmas y guitarra\nEl flamenco nació en Andalucía y hoy se conoce en todo el mundo. En 2010, la UNESCO lo declaró Patrimonio Cultural Inmaterial de la Humanidad. Tiene tres partes principales: el cante, el toque de guitarra y el baile. Las palmas marcan el ritmo, y hace falta mucha práctica y buen oído para seguirlo. ¿Sabes tocar las palmas? Muchos artistas flamencos famosos han nacido en ciudades andaluzas como Cádiz, Jerez o Sevilla.", "# Cartas y colecciones\nColeccionar cartas es una afición que une a muchos amigos. En el recreo se forman corrillos para enseñar las nuevas, cambiar las repetidas y buscar la que falta. Pokémon empezó como videojuego en Japón en 1996 y hoy tiene cartas, series y películas. Lo más bonito es cuidar tu colección y jugar limpio en cada intercambio. Guardar las cartas en fundas y carpetas evita que se doblen o se estropeen.", "# El lince ibérico\nEl lince ibérico es un felino que solo vive en la península ibérica. Tiene las orejas terminadas en pinceles negros y unas patillas que parecen barba. Hace unos años estaba a punto de desaparecer, pero gracias al trabajo de muchas personas hoy hay más de dos mil. Si vas a Doñana o a Sierra Morena, quizá tengas la suerte de ver uno. Proteger su hogar, el monte mediterráneo, es tarea de todos.", "# Gazpacho y salmorejo\nEl gazpacho es una sopa fría típica de Andalucía, perfecta para los días de calor. Se prepara con tomate, pimiento, pepino, ajo, aceite de oliva, vinagre y un poco de sal. Solo hay que triturarlo todo y dejarlo enfriar en la nevera. Su primo, el salmorejo cordobés, es más espeso. ¿Cuál de los dos te gusta más? Además, ambos son muy sanos, porque llevan verduras y aceite de oliva.", "# La Alhambra\nLa Alhambra de Granada es uno de los monumentos más visitados de España. La construyeron los reyes nazaríes hace más de setecientos años, y su nombre significa «la roja», por el color de sus muros. Dentro hay patios con fuentes, jardines y paredes decoradas con dibujos que se repiten como un puzle. ¡Parece sacada de un cuento! Si la visitas, no olvides mirar hacia arriba: ¡los techos son espectaculares!", "# Los Juegos Olímpicos\nLos Juegos Olímpicos se celebran cada cuatro años y reúnen a deportistas de casi todos los países del mundo. Su símbolo son cinco aros de colores entrelazados. Antes de empezar, se enciende una llama en Grecia, donde nacieron estos juegos hace muchos siglos, y se lleva hasta la ciudad olímpica. Para muchos atletas, participar ya es un premio. Los que ganan reciben medallas de oro, plata y bronce.", "# Carreras en la consola\nA mi hermana y a mí nos encantan los videojuegos de carreras. Elegimos un personaje, un coche y un circuito lleno de curvas, saltos y trampas. A veces gano yo y a veces gana ella, pero siempre acabamos riéndonos. Eso sí, en casa tenemos una norma muy clara: primero los deberes y después, un rato de juego. ¡Así da tiempo a todo! Jugar con otras personas es mucho más divertido que jugar solo.", "# Sobre dos ruedas\nMontar en bici es una forma genial de moverse y hacer ejercicio. Antes de salir hay que ponerse el casco, revisar los frenos y comprobar que las ruedas tienen aire. En la calle respetamos las señales y a los peatones. En Andalucía hay muchas vías verdes: antiguas vías de tren convertidas en caminos para pasear y pedalear. Además, pedalear es bueno para tu salud y para el planeta, porque no contamina.", "# Un cómic en la mochila\nLos cómics cuentan historias con viñetas, dibujos y bocadillos donde hablan los personajes. Los hay de superhéroes, de aventuras, de misterio y de humor. Leer un cómic parece fácil, pero hay que fijarse en todo: en las caras, en los fondos y en los ruidos escritos con letras grandes, como ¡PUM! o ¡ZAS! ¿Te animas a dibujar el tuyo? Muchos dibujantes famosos empezaron copiando a sus personajes favoritos en un cuaderno.", "# Robots que ayudan\nLos robots ya no son solo cosa de películas. Hay robots que limpian el suelo de casa, otros que ayudan a los médicos en las operaciones y algunos que exploran Marte. Todos funcionan gracias a la programación: una lista de órdenes muy precisas que alguien ha escrito. ¿Qué robot inventarías tú para ayudar en tu casa o en el cole? Quizá, algún día, tú seas quien programe el próximo gran robot.", "# La feria de mi pueblo\nCuando llega la feria, las calles se llenan de luces, farolillos y música. Hay casetas, trajes de flamenca, caballos y puestos de algodón de azúcar. A los niños nos encantan las atracciones, sobre todo la noria y los coches de choque. En Málaga la feria se celebra en agosto, y en Sevilla, en primavera. ¿Cómo es la feria de tu pueblo? Lo mejor de la feria es compartirla con la familia y los amigos.", "# Mi mejor letra\nHemos llegado a la última ficha del cuaderno. Escribir con buena letra no es cuestión de suerte, sino de práctica: letras del mismo tamaño, espacios iguales entre palabras y trazos tranquilos. Una letra clara ayuda a que los demás entiendan lo que pensamos y sentimos. Repasa esta página con calma y, al final, firma con tu mejor letra. ¡Enhorabuena por todo tu esfuerzo durante este cuaderno!"];
@@ -490,6 +592,240 @@ const programar = ()=>{ clearTimeout(t); t=setTimeout(render, 120); };
 $("panel").addEventListener("input", programar);
 $("panel").addEventListener("change", programar);
 $("zoom").addEventListener("input", ()=>{ document.documentElement.style.setProperty("--ancho", $("zoom").value+"px"); guardar(leer()); });
+/* =========================================================
+   Textos con IA
+   ========================================================= */
+const IA_TEMAS = ["videojuegos","deportes","animales","cine y series","cuentos","aventuras","ciencia","el espacio",
+  "Andalucía","música","naturaleza","inventos","historia","misterio","humor","comida","dinosaurios",
+  "superhéroes","amistad","mascotas","robots","viajes"];
+const IA_TEMAS_INICIO = "videojuegos, deportes, animales, cine y series, cuentos, aventuras, ciencia, Andalucía";
+const IA_TIPOS = {
+  variado: "variado: mezcla textos informativos (datos curiosos y reales), pequeños relatos y descripciones",
+  narrativo: "cuentos y relatos breves, con principio, nudo y final dentro del mismo párrafo",
+  informativo: "textos informativos con datos reales, curiosos y comprobados",
+  descriptivo: "descripciones de lugares, personajes, animales u objetos",
+  dialogo: "pequeños diálogos entre dos personajes, escritos en un solo párrafo con rayas sustituidas por guiones (-)",
+};
+const IA_WEBS = {
+  claude:   {nombre:"Claude",   url:p => "https://claude.ai/new?q=" + encodeURIComponent(p), directo:true},
+  chatgpt:  {nombre:"ChatGPT",  url:p => "https://chatgpt.com/?q=" + encodeURIComponent(p), directo:true},
+  gemini:   {nombre:"Gemini",   url:() => "https://gemini.google.com/app", directo:false},
+  deepseek: {nombre:"DeepSeek", url:() => "https://chat.deepseek.com/", directo:false},
+};
+/* caracteres que tienen todas las fuentes */
+const PERMITIDOS = new Set(Array.from(" !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|} ¡«»¿ÁÉÍÑÓÚÜáéíñóúü\n"));
+
+function cursoDe(edad){ return edad <= 11 ? `${edad-5}.º de Primaria` : "6.º de Primaria o 1.º de ESO"; }
+for (let e=6; e<=12; e++) $("iaEdad").insertAdjacentHTML("beforeend", `<option value="${e}">${e} años (${cursoDe(e)})</option>`);
+
+function leerIA(){ try{ return JSON.parse(localStorage.getItem("caligrafia-ia")) || {}; }catch(e){ return {}; } }
+function guardarIA(){ try{ localStorage.setItem("caligrafia-ia", JSON.stringify({n:$("iaN").value, edad:$("iaEdad").value,
+  tipo:$("iaTipoTexto").value, temas:$("iaTemas").value, extra:$("iaExtra").value})); }catch(e){} }
+(function(){ const g = leerIA();
+  $("iaN").value = g.n || 10; $("iaEdad").value = g.edad || 10; $("iaTipoTexto").value = g.tipo || "variado";
+  $("iaTemas").value = g.temas ?? IA_TEMAS_INICIO; $("iaExtra").value = g.extra || ""; })();
+
+/* --- cuánto texto cabe en una ficha con la configuración actual --- */
+async function capacidad(){
+  const c = leer();
+  await cargarJuego(c.tipo, c.letra);
+  const L = componer(Object.assign({}, c, {texto:""}));
+  const grupos = {alterna:2, modelo:3, doble:3, repaso:1, copia:2}[c.patron];
+  const lineas = Math.max(1, Math.floor(L.nfilas / grupos));
+  const maxw = PAG.w - PAG.ml - PAG.mr - L.indent*2 - L.em*0.25;
+  // ancho medio de una letra en un texto normal, medido con la fuente elegida
+  const muestra = EJEMPLOS.map(e => e.split("\n").slice(1).join(" ")).join(" ");
+  const txt = c.mayusculas ? muestra.toLocaleUpperCase("es") : muestra;
+  const porLetra = ancho(txt, L.fam.d, L.em) / txt.length;
+  const letrasLinea = Math.floor(maxw / porLetra);
+  // al partir por palabras se pierde algo de cada renglón
+  const cmax = Math.floor(lineas * letrasLinea * 0.9);
+  const cmin = Math.floor(cmax * 0.82);
+  return {lineas, letrasLinea, cmin, cmax, wmin: Math.round(cmin/6.2), wmax: Math.round(cmax/6.2), c, L};
+}
+
+function descripcionConfig(c){
+  const T = TIPOS[c.tipo] || TIPOS.mano;
+  const reparto = {alterna:"repasar y copiar", modelo:"modelo, repasar y copiar", doble:"repasar dos veces y copiar",
+    repaso:"solo repasar", copia:"modelo y copiar"}[c.patron];
+  return `${T.nombre.toLowerCase()} ${c.letra}, ${String(c.tam).replace(".", ",")} mm, ${reparto}`;
+}
+
+let capActual = null, promptEditado = false;
+async function actualizarIA(){
+  capActual = await capacidad();
+  const k = capActual, n = Math.max(1, Math.min(40, +$("iaN").value || 1));
+  $("iaCabe").innerHTML = `Se crearán <b>${n} ${n===1?"ficha":"fichas"}</b>, una por tema. Con la configuración actual (${esc(descripcionConfig(k.c))}) ` +
+    `caben <b>${k.lineas} renglones de texto</b> por ficha: unas <b>${k.wmin}-${k.wmax} palabras</b> por texto. ` +
+    `Si cambias el tamaño de letra, la letra o el reparto de renglones, vuelve a abrir esta ventana para recalcularlo.`;
+  if (!promptEditado) $("iaPrompt").value = crearPrompt(k, n);
+  document.querySelectorAll("#iaChips .chip").forEach(ch => ch.setAttribute("aria-pressed", temasEscritos().some(t => t.toLowerCase() === ch.textContent.toLowerCase())));
+  guardarIA();
+}
+
+function temasEscritos(){ return $("iaTemas").value.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean); }
+
+function crearPrompt(k, n){
+  const edad = +$("iaEdad").value, temas = temasEscritos();
+  const extra = $("iaExtra").value.trim();
+  const mayus = k.c.mayusculas ? "\n- Los textos se pasarán a mayúsculas: no uses siglas raras ni juegos con mayúsculas y minúsculas." : "";
+  return `Eres maestro o maestra de Educación Primaria en Andalucía (España). Escribe ${n} ${n===1?"texto breve":"textos breves"} para fichas de caligrafía de alumnado de ${edad} años (${cursoDe(edad)}). Cada texto se copiará a mano en una ficha.
+
+TEMAS
+- ${n===1?"Elige uno de estos temas":"Cada texto debe tratar un tema distinto, repartidos entre estos"}: ${temas.length ? temas.join(", ") : "temas que interesen a niños y niñas de esa edad"}.
+- Si hay más textos que temas, trata aspectos diferentes de un mismo tema, sin repetir contenido.
+- Tipo de texto: ${IA_TIPOS[$("iaTipoTexto").value]}.
+
+EXTENSIÓN (MUY IMPORTANTE)
+Cada texto tiene que llenar una ficha sin pasarse. En cada ficha caben ${k.lineas} renglones de unas ${k.letrasLinea} letras.
+- Entre ${k.wmin} y ${k.wmax} palabras por texto.
+- Entre ${k.cmin} y ${k.cmax} caracteres por texto, contando los espacios.
+- Todos los textos con una extensión parecida. Si uno se queda corto, amplíalo; si se pasa, recórtalo.
+
+ESTILO
+- Español de España, con ortografía, tildes y puntuación impecables, porque el alumnado los va a copiar.
+- Vocabulario y frases adecuados a ${edad} años. Contenido positivo, respetuoso, veraz y que les resulte interesante.
+- Un solo párrafo por texto, sin listas.
+- Usa solo letras, números y estos signos: . , ; : ¿ ? ¡ ! ( ) « » -
+- No uses emojis, ni comillas inglesas, ni el carácter de puntos suspensivos (escribe tres puntos), ni rayas largas.${mayus}${extra ? "\n- " + extra : ""}
+
+FORMATO DE LA RESPUESTA (OBLIGATORIO)
+- Cada texto empieza con una línea que tiene su título precedido de # y un espacio.
+- Debajo, el texto en un solo párrafo.
+- Deja una línea en blanco entre un texto y el siguiente.
+- No escribas nada más: ni introducción, ni despedida, ni números, ni negritas, ni comentarios.
+
+Ejemplo del formato:
+# Título del primer texto
+Texto del primer tema...
+
+# Título del segundo texto
+Texto del segundo tema...`;
+}
+
+$("iaChips").innerHTML = IA_TEMAS.map(tm => `<button type="button" class="chip" aria-pressed="false">${tm}</button>`).join("");
+$("iaChips").addEventListener("click", e => {
+  const ch = e.target.closest(".chip"); if (!ch) return;
+  const tm = ch.textContent, lista = temasEscritos();
+  const i = lista.findIndex(x => x.toLowerCase() === tm.toLowerCase());
+  if (i >= 0) lista.splice(i, 1); else lista.push(tm);
+  $("iaTemas").value = lista.join(", ");
+  promptEditado = false; actualizarIA();
+});
+["iaN","iaEdad","iaTipoTexto","iaTemas","iaExtra"].forEach(id => $(id).addEventListener("input", ()=>{ promptEditado = false; actualizarIA(); }));
+$("iaPrompt").addEventListener("input", ()=>{ promptEditado = true; });
+
+async function copiar(txt){
+  try { await navigator.clipboard.writeText(txt); return true; }
+  catch(e){
+    const ta = $("iaPrompt"); const abierto = ta.closest("details").open;
+    ta.closest("details").open = true; ta.focus(); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch(_){}
+    ta.closest("details").open = abierto;
+    return ok;
+  }
+}
+
+document.querySelectorAll("[data-ia]").forEach(b => b.addEventListener("click", async ()=>{
+  const p = $("iaPrompt").value, dest = b.dataset.ia, est = $("iaEstadoEnvio");
+  const copiado = await copiar(p);
+  if (dest === "copiar"){
+    est.className = "estado " + (copiado ? "ok" : "mal");
+    est.textContent = copiado ? "Encargo copiado. Pégalo en la IA que quieras con Ctrl+V." : "No se ha podido copiar solo: abre «Ver o retocar el encargo» y cópialo a mano.";
+    return;
+  }
+  const w = IA_WEBS[dest];
+  window.open(w.url(p), "_blank", "noopener");
+  est.className = "estado ok";
+  est.textContent = w.directo
+    ? `Se ha abierto ${w.nombre} con el encargo. Si no aparece escrito, pégalo con Ctrl+V (también está copiado).`
+    : (copiado ? `Se ha abierto ${w.nombre}. El encargo está copiado: pégalo con Ctrl+V y envíalo.` : `Se ha abierto ${w.nombre}. Copia el encargo desde «Ver o retocar el encargo» y pégalo allí.`);
+  if (!copiado && !w.directo) $("iaPrompt").closest("details").open = true;
+}));
+
+/* --- limpiar la respuesta pegada --- */
+function limpiarRespuesta(bruto){
+  let quitados = 0;
+  const lineas = bruto.replace(/\r/g, "")
+    .replace(/[\u201C\u201E\u00AB]/g, "«").replace(/[\u201D\u00BB]/g, "»")
+    .replace(/[\u2018\u2019\u0060\u00B4]/g, "'").replace(/\u2026/g, "...")
+    .replace(/[\u2012\u2013\u2014\u2015\u2212]/g, "-").replace(/[\u00A0\u202F\u2009]/g, " ")
+    .split("\n");
+  let comillaAbierta = false;
+  const out = [];
+  for (let l of lineas){
+    let s = l.trim();
+    // títulos en negrita o con ## -> # Título; quita numeraciones del título
+    const neg = s.match(/^\*\*(.+?)\*\*:?$/);
+    if (neg) s = "# " + neg[1];
+    const tit = s.match(/^#+\s*(.*)$/);
+    if (tit) s = "# " + tit[1].replace(/^(texto|ficha)?\s*\d+\s*[.):-]\s*/i, "").replace(/[*_]/g, "").trim();
+    else s = s.replace(/\*\*|__/g, "").replace(/^[-*]\s+/, "");
+    // comillas rectas -> « »
+    s = s.replace(/"/g, () => (comillaAbierta = !comillaAbierta) ? "«" : "»");
+    // letras con acentos que no están en la fuente -> sin acento; el resto fuera
+    s = Array.from(s).map(ch => {
+      if (PERMITIDOS.has(ch)) return ch;
+      const base = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (base.length === 1 && PERMITIDOS.has(base)) return base;
+      quitados++; return "";
+    }).join("").replace(/ {2,}/g, " ").trim();
+    out.push(s);
+  }
+  // fuera la introducción, antes del primer título
+  const primero = out.findIndex(s => s.startsWith("# "));
+  const partes = (primero > 0 ? out.slice(primero) : out).join("\n").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  if (primero < 0) return {texto: partes.join("\n\n"), quitados};
+  // un párrafo sin título detrás de un texto: si es el último y corto, es la
+  // despedida de la IA; si no, es la continuación del texto anterior
+  const bloquesOk = [];
+  partes.forEach((b, i) => {
+    if (b.startsWith("# ") || !bloquesOk.length){ bloquesOk.push(b); return; }
+    const palabras = b.split(/\s+/).length;
+    if (i === partes.length - 1 && palabras < 25) return;
+    bloquesOk[bloquesOk.length - 1] += " " + b.replace(/\n/g, " ");
+  });
+  return {texto: bloquesOk.join("\n\n"), quitados};
+}
+
+async function usarRespuesta(sustituir){
+  const {texto, quitados} = limpiarRespuesta($("iaRespuesta").value);
+  const est = $("iaEstado"), inf = $("iaInforme");
+  inf.innerHTML = "";
+  if (!texto){ est.className = "estado mal"; est.textContent = "Pega primero la respuesta de la IA en el recuadro."; return; }
+  const bs = bloques(texto, false);
+  $("texto").value = sustituir || !$("texto").value.trim() ? texto : $("texto").value.trim() + "\n\n" + texto;
+  $("paginaNueva").checked = true;
+  await render();
+  // revisar cómo encaja cada texto
+  const k = capActual || await capacidad();
+  const L = k.L, avisos = [];
+  let largos = 0, cortos = 0;
+  bs.forEach(b => {
+    const n = partir(k.c.mayusculas ? b.texto.toLocaleUpperCase("es") : b.texto, L.fam.d, L.em, PAG.w - PAG.ml - PAG.mr - L.indent*2 - L.em*0.25).length;
+    if (n > k.lineas){ largos++; avisos.push(`«${b.tema || b.texto.slice(0,30)}» ocupa ${n} renglones y solo caben ${k.lineas}: pasará a una segunda ficha.`); }
+    else if (n < k.lineas - 2){ cortos++; avisos.push(`«${b.tema || b.texto.slice(0,30)}» ocupa ${n} de ${k.lineas} renglones.`); }
+  });
+  est.className = "estado ok";
+  est.textContent = `${sustituir ? "Textos sustituidos" : "Textos añadidos"}: ${bs.length} ${bs.length===1?"texto":"textos"}.` +
+    (quitados ? ` ${quitados===1?"Se ha quitado 1 carácter":"Se han quitado "+quitados+" caracteres"} que la letra no tiene (emojis o símbolos raros).` : "") +
+    (largos ? ` ${largos} no ${largos===1?"cabe":"caben"} en una ficha.` : "") +
+    (cortos ? ` ${cortos} ${cortos===1?"deja":"dejan"} renglones libres: puedes activar «Llenar los renglones sobrantes».` : "");
+  inf.innerHTML = avisos.slice(0, 8).map(a => `<li>${esc(a)}</li>`).join("") + (avisos.length > 8 ? `<li>y ${avisos.length-8} más.</li>` : "");
+  if (!avisos.length) setTimeout(()=> $("dlgIA").close(), 900);
+}
+$("iaSustituir").addEventListener("click", ()=> usarRespuesta(true));
+$("iaAnadir").addEventListener("click", ()=> usarRespuesta(false));
+
+$("btnIA").addEventListener("click", ()=>{
+  $("iaEstado").textContent = ""; $("iaInforme").innerHTML = ""; $("iaEstadoEnvio").textContent = "";
+  promptEditado = false;
+  $("dlgIA").showModal();
+  actualizarIA();
+});
+$("iaCerrar").addEventListener("click", ()=> $("dlgIA").close());
+$("dlgIA").addEventListener("click", e => { if (e.target === $("dlgIA")) $("dlgIA").close(); });
+
 let tipoActual = null;
 document.querySelectorAll("input[name=tipo]").forEach(r => r.addEventListener("change", ()=>{
   if (tipoActual){
