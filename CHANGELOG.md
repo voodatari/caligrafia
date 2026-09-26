@@ -3,6 +3,16 @@
 Aquí se apuntan los cambios de cada versión del Cuaderno de caligrafía.
 La versión más reciente va arriba.
 
+## [1.3.1] - 2026-09-26
+
+### Corregido
+
+- **Líneas en blanco debajo de los títulos.** Algunas IA, como ChatGPT, dejan una o varias líneas en blanco entre la línea del título (`# ...`) y su texto, aunque el encargo pida lo contrario. Como la línea en blanco separa un texto del siguiente, salían fichas con el título y sin texto. Ahora:
+  - al pegar en la caja «Texto» o en la ventana de textos con IA, esas líneas se quitan y un aviso dice cuántas se han quitado;
+  - aunque se escriban a mano, las fichas salen bien;
+  - un título que se queda sin texto ya no crea una ficha vacía.
+- En la ventana de textos con IA, si la respuesta traía el título en un bloque aparte, el texto se pegaba en la misma línea que el título. Ahora va debajo, como debe.
+
 ## [1.3] - 2026-09-26
 
 ### Añadido

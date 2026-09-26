@@ -178,6 +178,7 @@ dialog.ia::backdrop{background:rgba(31,79,163,.28)}
     <fieldset>
       <legend>Texto</legend>
       <textarea id="texto" spellcheck="true" aria-describedby="ayudaTexto"></textarea>
+      <p class="estado ok" id="avisoTexto" aria-live="polite" hidden></p>
       <p class="ayuda" id="ayudaTexto">Separa los textos con una línea en blanco. Si una línea empieza por <b>#</b>, será el tema de esa ficha (por ejemplo: <i># El lince ibérico</i>).</p>
       <div class="fila" style="margin-top:10px">
         <button type="button" class="btn btn-principal btn-mini" id="btnIA">Crear textos con IA</button>
@@ -252,7 +253,7 @@ dialog.ia::backdrop{background:rgba(31,79,163,.28)}
       <p class="ayuda" style="margin:0 0 8px">Instálalas en tu ordenador para escribir con ellas en Word o en cualquier programa.</p>
       <div class="fuentes" id="fuentes"></div>
     </fieldset>
-    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.3 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
+    <p class="pie-app">Trazos basados en las fuentes Hershey (Roman Simplex y Script Simplex). Todo se genera en tu navegador: el texto no se envía a ningún sitio.<br>Versión 1.3.1 · <a href="https://github.com/voodatari/caligrafia/blob/main/CHANGELOG.md">Novedades</a></p>
   </form>
 
   <section class="vista" aria-label="Vista previa">
@@ -419,8 +420,18 @@ function partir(parrafo, fam, em, max){
   if (cur) out.push(cur);
   return out;
 }
+/* Las IA a veces dejan líneas en blanco debajo del título (# ...). Como la
+   línea en blanco separa un texto del siguiente, el título se quedaría solo
+   en una ficha vacía. Aquí se quitan esas líneas. Devuelve cuántas quitó. */
+function arreglarTitulos(texto){
+  let n = 0;
+  const t = texto.replace(/\r/g, "").replace(/^([ \t]*#[^\n]*)\n((?:[ \t]*\n)+)(?=[ \t]*[^#\s])/gm,
+    (m, tit, blancas) => { n += blancas.split("\n").length - 1; return tit + "\n"; });
+  return {texto: t, n};
+}
+
 function bloques(texto, mayus){
-  const partes = texto.replace(/\r/g,"").split(/\n\s*\n/);
+  const partes = arreglarTitulos(texto).texto.split(/\n\s*\n/);
   const res = [];
   for (const p of partes){
     let tema = ""; const lineas = [];
@@ -428,7 +439,7 @@ function bloques(texto, mayus){
       const m = l.match(/^\s*#\s*(.*)$/);
       if (m) tema = m[1].trim(); else if (l.trim()) lineas.push(l.trim());
     }
-    if (!lineas.length && !tema) continue;
+    if (!lineas.length) continue;            // un título sin texto no hace ficha
     let t = lineas.join(" ");
     if (mayus) t = t.toLocaleUpperCase("es");
     res.push({tema, texto:t});
@@ -774,7 +785,8 @@ function limpiarRespuesta(bruto){
   }
   // fuera la introducción, antes del primer título
   const primero = out.findIndex(s => s.startsWith("# "));
-  const partes = (primero > 0 ? out.slice(primero) : out).join("\n").split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+  const unido = arreglarTitulos((primero > 0 ? out.slice(primero) : out).join("\n")).texto;
+  const partes = unido.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
   if (primero < 0) return {texto: partes.join("\n\n"), quitados};
   // un párrafo sin título detrás de un texto: si es el último y corto, es la
   // despedida de la IA; si no, es la continuación del texto anterior
@@ -783,7 +795,9 @@ function limpiarRespuesta(bruto){
     if (b.startsWith("# ") || !bloquesOk.length){ bloquesOk.push(b); return; }
     const palabras = b.split(/\s+/).length;
     if (i === partes.length - 1 && palabras < 25) return;
-    bloquesOk[bloquesOk.length - 1] += " " + b.replace(/\n/g, " ");
+    const previo = bloquesOk[bloquesOk.length - 1];
+    // si el bloque anterior es solo un título, el texto va en la línea de debajo
+    bloquesOk[bloquesOk.length - 1] = previo + (previo.includes("\n") ? " " : "\n") + b.replace(/\n/g, " ");
   });
   return {texto: bloquesOk.join("\n\n"), quitados};
 }
@@ -837,6 +851,25 @@ document.querySelectorAll("input[name=tipo]").forEach(r => r.addEventListener("c
   const letra = letraPorTipo[r.value] ?? TIPOS[r.value].letra;
   if (letra) document.querySelector(`input[name=letra][value="${letra}"]`).checked = true;
 }));
+/* Corrige a la vista las líneas en blanco bajo los títulos, sin mover el cursor. */
+function corregirCaja(caja, aviso){
+  const v = caja.value, r = arreglarTitulos(v);
+  if (!r.n || r.texto === v.replace(/\r/g, "")) return 0;
+  const antes = arreglarTitulos(v.slice(0, caja.selectionStart)).texto.length;
+  caja.value = r.texto;
+  try { caja.setSelectionRange(antes, antes); } catch(e){}
+  if (aviso){
+    aviso.hidden = false; aviso.className = "estado ok";
+    aviso.textContent = r.n === 1 ? "Se ha quitado 1 línea en blanco que había debajo de un título."
+                                  : `Se han quitado ${r.n} líneas en blanco que había debajo de los títulos.`;
+    clearTimeout(aviso._t); aviso._t = setTimeout(()=>{ aviso.hidden = true; }, 6000);
+  }
+  return r.n;
+}
+$("texto").addEventListener("paste", ()=> setTimeout(()=>{ if (corregirCaja($("texto"), $("avisoTexto"))) programar(); }, 0));
+$("texto").addEventListener("change", ()=>{ if (corregirCaja($("texto"), $("avisoTexto"))) programar(); });
+$("iaRespuesta").addEventListener("paste", ()=> setTimeout(()=> corregirCaja($("iaRespuesta"), $("iaEstado")), 0));
+
 $("btnEjemplos").addEventListener("click", ()=>{ $("texto").value = EJEMPLOS.join("\n\n"); $("paginaNueva").checked = true; render(); });
 $("btnVaciar").addEventListener("click", ()=>{ $("texto").value = ""; $("texto").focus(); render(); });
 $("btnImprimir").addEventListener("click", ()=>{ $("avisoPdf").hidden = false; setTimeout(()=>window.print(), 60); });
