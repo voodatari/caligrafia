@@ -43,3 +43,13 @@ Están en la carpeta `fonts/`, y todas juntas en `fonts/fuentes-caligrafia.zip`.
 (Todos los archivos terminan en `-Regular.ttf`.)
 
 Incluyen ñ, vocales con tilde, ü y los signos ¿ ¡ « ». Los trazos se basan en las fuentes Hershey: Roman Simplex para la imprenta y para las mayúsculas y los números de la cursiva, y Script Simplex para las minúsculas cursivas, de A. V. Hershey (U.S. National Bureau of Standards), cuyo uso se permite con atribución.
+
+## Cómo está hecho
+
+Toda la web es un único `index.html` con su HTML, CSS y JavaScript, sin dependencias ni compilación. Las fuentes de `fonts/` se generan aparte, a partir de las Hershey, con un script de Python que no se publica en este repositorio.
+
+Para probarla en local basta con servir la carpeta con un servidor web (por ejemplo, la extensión *Live Server* de VS Code, `npx serve .` o `python -m http.server 8080`).
+
+---
+
+Hecho por Daniel Vera (profe Dani).
