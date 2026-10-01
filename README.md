@@ -52,4 +52,4 @@ Para probarla en local basta con servir la carpeta con un servidor web (por ejem
 
 ---
 
-Hecho por Daniel Vera (profe Dani).
+Hecho por profe Dani.
